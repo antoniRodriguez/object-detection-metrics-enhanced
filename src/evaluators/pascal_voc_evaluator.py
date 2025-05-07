@@ -5,6 +5,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from src.bounding_box import BoundingBox
 from src.utils.enumerators import (BBFormat, CoordinatesType,
                                    MethodAveragePrecision)
@@ -105,19 +106,22 @@ def get_pascalvoc_metrics(gt_boxes,
     # Get classes of all bounding boxes separating them by classes
     gt_classes_only = []
     classes_bbs = {}
-    for bb in gt_boxes:
+    print("Grouping bounding boxes by class...")
+    for bb in tqdm(gt_boxes, desc="Processing ground truth boxes"):
         c = bb.get_class_id()
         gt_classes_only.append(c)
         classes_bbs.setdefault(c, {'gt': [], 'det': []})
         classes_bbs[c]['gt'].append(bb)
     gt_classes_only = list(set(gt_classes_only))
-    for bb in det_boxes:
+    
+    for bb in tqdm(det_boxes, desc="Processing detection boxes"):
         c = bb.get_class_id()
         classes_bbs.setdefault(c, {'gt': [], 'det': []})
         classes_bbs[c]['det'].append(bb)
 
     # Precision x Recall is obtained individually by each class
-    for c, v in classes_bbs.items():
+    print("Computing metrics per class...")
+    for c, v in tqdm(classes_bbs.items(), desc="Evaluating classes"):
         # Report results only in the classes that are in the GT
         if c not in gt_classes_only:
             continue
@@ -142,7 +146,7 @@ def get_pascalvoc_metrics(gt_boxes,
             'recall': []
         }
         # Loop through detections
-        for idx_det, det in enumerate(dects):
+        for idx_det, det in enumerate(tqdm(dects, desc=f"Processing detections for class {c}", leave=False)):
             img_det = det.get_image_name()
 
             if generate_table:
