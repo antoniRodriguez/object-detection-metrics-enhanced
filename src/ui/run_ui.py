@@ -26,6 +26,44 @@ class Main_Dialog(QMainWindow, Main_UI):
         # Define results dialog
         self.dialog_results = Results_Dialog()
 
+        # Reorganize PASCAL VOC section
+        # Title
+        self.lbl_detections_dir_6 = self.findChild(QtWidgets.QLabel, "lbl_detections_dir_6")
+        if self.lbl_detections_dir_6:
+            self.lbl_detections_dir_6.setGeometry(QtCore.QRect(920, 10, 191, 21))
+
+        # IOU threshold label and spinbox
+        self.lbl_IOU_thresh = self.findChild(QtWidgets.QLabel, "lbl_IOU_thresh")
+        if self.lbl_IOU_thresh:
+            self.lbl_IOU_thresh.setGeometry(QtCore.QRect(920, 40, 101, 17))
+
+        self.dsb_IOU_pascal = self.findChild(QtWidgets.QDoubleSpinBox, "dsb_IOU_pascal")
+        if self.dsb_IOU_pascal:
+            self.dsb_IOU_pascal.setGeometry(QtCore.QRect(1030, 35, 81, 27))
+
+        # Confidence threshold label and spinbox
+        self.lbl_conf_thresh = QtWidgets.QLabel(self.frame_12)
+        self.lbl_conf_thresh.setGeometry(QtCore.QRect(920, 70, 110, 17))
+        self.lbl_conf_thresh.setObjectName("lbl_conf_thresh")
+        self.lbl_conf_thresh.setText("Conf Threshold:")
+        
+        self.dsb_conf_thresh = QtWidgets.QDoubleSpinBox(self.frame_12)
+        self.dsb_conf_thresh.setGeometry(QtCore.QRect(1030, 65, 81, 27))
+        self.dsb_conf_thresh.setObjectName("dsb_conf_thresh")
+        self.dsb_conf_thresh.setMinimum(0.0)
+        self.dsb_conf_thresh.setMaximum(1.0)
+        self.dsb_conf_thresh.setSingleStep(0.01)
+        self.dsb_conf_thresh.setValue(0.5)
+
+        # Metrics checkboxes
+        self.chb_metric_AP_pascal = self.findChild(QtWidgets.QCheckBox, "chb_metric_AP_pascal")
+        if self.chb_metric_AP_pascal:
+            self.chb_metric_AP_pascal.setGeometry(QtCore.QRect(920, 100, 121, 22))
+
+        self.chb_metric_mAP_pascal = self.findChild(QtWidgets.QCheckBox, "chb_metric_mAP_pascal")
+        if self.chb_metric_mAP_pascal:
+            self.chb_metric_mAP_pascal.setGeometry(QtCore.QRect(1050, 100, 71, 22))
+
         # Default values
         self.dir_annotations_gt = None
         self.dir_images_gt = None
@@ -266,21 +304,25 @@ class Main_Dialog(QMainWindow, Main_UI):
         else:
             self.dir_dets = None
 
-    def btn_statistics_det_clicked(self):
-        det_annotations, passed = self.load_annotations_det()
-        if passed is False:
+    def btn_stats_det_clicked(self):
+        # Get detections annotations
+        det_annotations, success = self.load_annotations_det()
+        if not success:
             return
-        gt_annotations = self.load_annotations_gt()
-        if self.dir_images_gt is None or os.path.isdir(self.dir_images_gt) is False:
+        
+        # Filter by confidence threshold
+        conf_thresh = self.dsb_conf_thresh.value()
+        det_annotations = [bb for bb in det_annotations if bb.get_confidence() >= conf_thresh]
+        
+        if len(det_annotations) > 0:
+            # Show details dialog
+            self.dialog_statistics.show_dialog(BBType.DETECTED, None, det_annotations, self.dir_images_gt)
+        else:
             self.show_popup(
-                'Directory with ground-truth images was not specified or do not contain images.',
-                'Images not found',
+                'No detections found above the confidence threshold.',
+                'No detections',
                 buttons=QMessageBox.Ok,
                 icon=QMessageBox.Information)
-            return
-        # Open statistics dialog on the detections
-        self.dialog_statistics.show_dialog(BBType.DETECTED, gt_annotations, det_annotations,
-                                           self.dir_images_gt)
 
     def btn_output_dir_clicked(self):
         if self.txb_output_dir.text() == '':
@@ -311,6 +353,18 @@ class Main_Dialog(QMainWindow, Main_UI):
             self.show_popup(
                 'No detection of the selected type was found in the folder.\nCheck if the selected type corresponds to the files in the folder and try again.',
                 'Invalid detections',
+                buttons=QMessageBox.Ok,
+                icon=QMessageBox.Information)
+            return
+
+        # Filter detections by confidence threshold
+        conf_thresh = self.dsb_conf_thresh.value()
+        det_annotations = [bb for bb in det_annotations if bb.get_confidence() >= conf_thresh]
+        
+        if len(det_annotations) == 0:
+            self.show_popup(
+                'No detections found above the confidence threshold.',
+                'No detections',
                 buttons=QMessageBox.Ok,
                 icon=QMessageBox.Information)
             return
