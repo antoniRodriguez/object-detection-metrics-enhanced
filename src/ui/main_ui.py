@@ -466,7 +466,7 @@ class Ui_Dialog(object):
         self.retranslateUi(Dialog)
         self.btn_gt_dir.clicked.connect(Dialog.btn_gt_dir_clicked)
         self.btn_gt_images_dir.clicked.connect(Dialog.btn_gt_images_dir_clicked)
-        self.btn_stats_det.clicked.connect(Dialog.btn_statistics_det_clicked)
+        self.btn_stats_det.clicked.connect(Dialog.btn_stats_det_clicked)
         self.btn_stats_gt.clicked.connect(Dialog.btn_gt_statistics_clicked)
         self.btn_groundtruth_dir_5.clicked.connect(Dialog.btn_gt_classes_clicked)
         self.btn_groundtruth_dir_3.clicked.connect(Dialog.btn_det_dir_clicked)
@@ -557,11 +557,82 @@ class Ui_Dialog(object):
         self.lbl_groundtruth_dir_28.setText(_translate("Dialog", "Output:"))
 
 
+class Main_Dialog(QtWidgets.QDialog, Ui_Dialog):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.details_dialog = Details_Dialog()
+        self.dir_images = ''
+        
+        # Add confidence threshold controls
+        self.lbl_conf_thresh = QtWidgets.QLabel(self.frame_12)
+        self.lbl_conf_thresh.setGeometry(QtCore.QRect(920, 75, 110, 17))
+        self.lbl_conf_thresh.setObjectName("lbl_conf_thresh")
+        self.lbl_conf_thresh.setText("Confidence Threshold:")
+        
+        self.dsb_conf_thresh = QtWidgets.QDoubleSpinBox(self.frame_12)
+        self.dsb_conf_thresh.setGeometry(QtCore.QRect(1030, 75, 80, 27))
+        self.dsb_conf_thresh.setObjectName("dsb_conf_thresh")
+        self.dsb_conf_thresh.setMinimum(0.0)
+        self.dsb_conf_thresh.setMaximum(1.0)
+        self.dsb_conf_thresh.setSingleStep(0.1)
+        self.dsb_conf_thresh.setValue(0.5)
+        
+        # Connect signals
+        self.btn_stats_det.clicked.connect(self.btn_stats_det_clicked)
+
+    def get_det_annotations(self):
+        # Get detections annotations
+        det_annotations = []
+        if self.txb_det_dir.text() != "":
+            det_annotations = self.get_annotations(self.txb_det_dir.text(), self.get_det_format())
+            # Filter by confidence threshold
+            conf_thresh = self.dsb_conf_thresh.value()
+            det_annotations = [bb for bb in det_annotations if bb.get_confidence() >= conf_thresh]
+        return det_annotations
+
+    def btn_stats_det_clicked(self):
+        # Get detections annotations
+        det_annotations = self.get_det_annotations()
+        if len(det_annotations) > 0:
+            # Show details dialog
+            from src.ui.details import Details_Dialog
+            details_dialog = Details_Dialog(self.txb_det_dir.text(), det_annotations)
+            details_dialog.exec_()
+
+    def btn_gt_dir_clicked(self):
+        pass
+
+    def btn_gt_images_dir_clicked(self):
+        pass
+
+    def btn_gt_statistics_clicked(self):
+        pass
+
+    def btn_gt_classes_clicked(self):
+        pass
+
+    def btn_det_dir_clicked(self):
+        pass
+
+    def btn_det_classes_clicked(self):
+        pass
+
+    def btn_run_clicked(self):
+        pass
+
+    def btn_output_dir_clicked(self):
+        pass
+
+    def get_annotations(self, dir_path, format_type):
+        return []
+
+    def get_det_format(self):
+        return None
+
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
-    Dialog.show()
+    dialog = Main_Dialog()
+    dialog.show()
     sys.exit(app.exec_())
