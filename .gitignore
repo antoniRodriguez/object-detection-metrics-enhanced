@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*$py.class
 
 # C extensions
 *.so
@@ -80,6 +81,12 @@ target/
 
 # Mac OS-specific storage files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # vim
 *.swp
@@ -87,3 +94,7 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Python virtual environment
+venv/
+ENV/
